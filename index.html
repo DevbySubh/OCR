@@ -16,14 +16,14 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
         }
 
         .container {
             background: white;
             padding: 30px;
-            width: 360px;
+            width: 420px;
             border-radius: 10px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.1);
             text-align: center;
@@ -62,16 +62,19 @@
             margin-top: 15px;
             font-size: 14px;
             min-height: 20px;
+            font-weight: bold;
         }
 
-        .download {
-            display: none;
-            margin-top: 20px;
-            text-decoration: none;
-            background: #28a745;
-            color: white;
+        pre {
+            margin-top: 15px;
+            text-align: left;
+            background: #f1f1f1;
             padding: 10px;
             border-radius: 5px;
+            max-height: 250px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-size: 13px;
         }
     </style>
 </head>
@@ -79,21 +82,22 @@
 
 <div class="container">
     <h1>📄 PDF OCR Converter</h1>
-    <p>Upload a scanned PDF and get extracted text.</p>
+    <p>Upload a scanned PDF and extract text (first page).</p>
 
-    <form>
+    <form id="uploadForm">
         <input type="file" id="pdfFile" accept="application/pdf">
         <button type="submit">Convert to Text</button>
     </form>
 
     <div id="status" class="status">Checking backend...</div>
+
+    <pre id="ocrResult"></pre>
 </div>
 
 <script>
-    // 🔗 Backend URL (Render)
     const BACKEND_BASE_URL = "https://ocr-backend-uq71.onrender.com";
 
-    // Check backend status on page load
+    // Check backend status
     fetch(BACKEND_BASE_URL)
         .then(res => res.json())
         .then(data => {
@@ -103,8 +107,8 @@
             document.getElementById("status").textContent = "Backend not reachable ❌";
         });
 
-    // Handle PDF upload
-    document.querySelector("form").addEventListener("submit", async (e) => {
+    // Handle PDF upload + OCR
+    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
         e.preventDefault();
 
         const fileInput = document.getElementById("pdfFile");
@@ -115,10 +119,11 @@
             return;
         }
 
+        document.getElementById("status").textContent = "Processing OCR…";
+        document.getElementById("ocrResult").textContent = "";
+
         const formData = new FormData();
         formData.append("file", file);
-
-        document.getElementById("status").textContent = "Uploading file...";
 
         try {
             const response = await fetch(BACKEND_BASE_URL + "/ocr", {
@@ -127,12 +132,13 @@
             });
 
             const data = await response.json();
-            document.getElementById("status").textContent =
-                "Uploaded: " + data.original_name;
 
-        } catch (err) {
-            document.getElementById("status").textContent =
-                "Upload failed ❌";
+            document.getElementById("status").textContent = "OCR completed ✅";
+            document.getElementById("ocrResult").textContent =
+                data.text || "No text detected";
+
+        } catch (error) {
+            document.getElementById("status").textContent = "OCR failed ❌";
         }
     });
 </script>
