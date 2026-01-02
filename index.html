@@ -21,7 +21,7 @@
         }
 
         .container {
-            background: #ffffff;
+            background: white;
             padding: 30px;
             width: 360px;
             border-radius: 10px;
@@ -61,10 +61,11 @@
         .status {
             margin-top: 15px;
             font-size: 14px;
+            min-height: 20px;
         }
 
         .download {
-            display: block;
+            display: none;
             margin-top: 20px;
             text-decoration: none;
             background: #28a745;
@@ -76,86 +77,65 @@
 </head>
 <body>
 
-    <div class="container">
-        <h1>📄 PDF OCR Converter</h1>
-        <p>Upload a scanned PDF and get extracted text.</p>
+<div class="container">
+    <h1>📄 PDF OCR Converter</h1>
+    <p>Upload a scanned PDF and get extracted text.</p>
 
-        <form id="uploadForm">
-            <input type="file" id="pdfFile" accept="application/pdf" required>
-            <button type="submit">Convert to Text</button>
-        </form>
+    <form>
+        <input type="file" id="pdfFile" accept="application/pdf">
+        <button type="submit">Convert to Text</button>
+    </form>
 
-        <div id="status" class="status">Checking backend...</div>
+    <div id="status" class="status">Checking backend...</div>
+</div>
 
-        <a id="downloadLink" class="download" hidden>
-            ⬇ Download OCR File
-        </a>
-    </div>
+<script>
+    // 🔗 Backend URL (Render)
+    const BACKEND_BASE_URL = "https://ocr-backend-uq71.onrender.com";
 
-    <script>
-        const form = document.getElementById("uploadForm");
-        const statusDiv = document.getElementById("status");
-        const downloadLink = document.getElementById("downloadLink");
-
-        // CHANGE THIS TO YOUR BACKEND OCR ENDPOINT
-        const BACKEND_URL = "https://ocr-backend-uq71.onrender.com";
-        fetch(BACKEND_BASE_URL)
+    // Check backend status on page load
+    fetch(BACKEND_BASE_URL)
         .then(res => res.json())
         .then(data => {
-        document.getElementById("status").textContent = data.status;
-          })
+            document.getElementById("status").textContent = data.status;
+        })
         .catch(() => {
-        document.getElementById("status").textContent = "Backend not reachable";
+            document.getElementById("status").textContent = "Backend not reachable ❌";
         });
 
+    // Handle PDF upload
+    document.querySelector("form").addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
+        const fileInput = document.getElementById("pdfFile");
+        const file = fileInput.files[0];
 
-            const fileInput = document.getElementById("pdfFile");
-            const file = fileInput.files[0];
+        if (!file) {
+            document.getElementById("status").textContent = "Please select a PDF file";
+            return;
+        }
 
-            if (!file) {
-                statusDiv.textContent = "Please select a PDF file.";
-                return;
-            }
+        const formData = new FormData();
+        formData.append("file", file);
 
-            if (file.size > 10 * 1024 * 1024) {
-                statusDiv.textContent = "File size must be under 10MB.";
-                return;
-            }
+        document.getElementById("status").textContent = "Uploading file...";
 
-            statusDiv.textContent = "Processing OCR... ⏳";
-            downloadLink.hidden = true;
+        try {
+            const response = await fetch(BACKEND_BASE_URL + "/ocr", {
+                method: "POST",
+                body: formData
+            });
 
-            const formData = new FormData();
-            formData.append("file", file);
+            const data = await response.json();
+            document.getElementById("status").textContent =
+                "Uploaded: " + data.filename;
 
-            try {
-                const response = await fetch(BACKEND_URL, {
-                    method: "POST",
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    throw new Error("OCR failed");
-                }
-
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
-
-                downloadLink.href = url;
-                downloadLink.download = "ocr_output.txt";
-                downloadLink.hidden = false;
-
-                statusDiv.textContent = "OCR completed successfully ✅";
-
-            } catch (error) {
-                console.error(error);
-                statusDiv.textContent = "Error during OCR. Please try again.";
-            }
-        });
-    </script>
+        } catch (err) {
+            document.getElementById("status").textContent =
+                "Upload failed ❌";
+        }
+    });
+</script>
 
 </body>
 </html>
