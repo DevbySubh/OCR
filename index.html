@@ -99,6 +99,15 @@
 
         // CHANGE THIS TO YOUR BACKEND OCR ENDPOINT
         const BACKEND_URL = "https://ocr-backend-uq71.onrender.com";
+        fetch(BACKEND_BASE_URL)
+        .then(res => res.json())
+        .then(data => {
+        document.getElementById("status").textContent = data.status;
+          })
+        .catch(() => {
+        document.getElementById("status").textContent = "Backend not reachable";
+        });
+
 
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
