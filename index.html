@@ -128,7 +128,7 @@
 
             const data = await response.json();
             document.getElementById("status").textContent =
-                "Uploaded: " + data.filename;
+                "Uploaded: " + data.original_name;
 
         } catch (err) {
             document.getElementById("status").textContent =
