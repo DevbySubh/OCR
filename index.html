@@ -1,24 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>PDF OCR Tool</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>PDF OCR Converter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f6f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 30px;
+            width: 360px;
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 14px;
+            color: #555;
+        }
+
+        input[type="file"] {
+            margin: 20px 0;
+            width: 100%;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            border: none;
+            color: white;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .status {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .download {
+            display: block;
+            margin-top: 20px;
+            text-decoration: none;
+            background: #28a745;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
 
     <div class="container">
         <h1>📄 PDF OCR Converter</h1>
-        <p>Upload a scanned PDF and get the extracted text.</p>
+        <p>Upload a scanned PDF and get extracted text.</p>
 
         <form id="uploadForm">
-            <input 
-                type="file" 
-                id="pdfFile" 
-                accept="application/pdf" 
-                required 
-            />
+            <input type="file" id="pdfFile" accept="application/pdf" required>
             <button type="submit">Convert to Text</button>
         </form>
 
@@ -29,6 +92,61 @@
         </a>
     </div>
 
-    <script src="app.js"></script>
+    <script>
+        const form = document.getElementById("uploadForm");
+        const statusDiv = document.getElementById("status");
+        const downloadLink = document.getElementById("downloadLink");
+
+        // CHANGE THIS TO YOUR BACKEND OCR ENDPOINT
+        const BACKEND_URL = "https://your-backend-url/ocr";
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const fileInput = document.getElementById("pdfFile");
+            const file = fileInput.files[0];
+
+            if (!file) {
+                statusDiv.textContent = "Please select a PDF file.";
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                statusDiv.textContent = "File size must be under 10MB.";
+                return;
+            }
+
+            statusDiv.textContent = "Processing OCR... ⏳";
+            downloadLink.hidden = true;
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch(BACKEND_URL, {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error("OCR failed");
+                }
+
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+
+                downloadLink.href = url;
+                downloadLink.download = "ocr_output.txt";
+                downloadLink.hidden = false;
+
+                statusDiv.textContent = "OCR completed successfully ✅";
+
+            } catch (error) {
+                console.error(error);
+                statusDiv.textContent = "Error during OCR. Please try again.";
+            }
+        });
+    </script>
+
 </body>
 </html>
